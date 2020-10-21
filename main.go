@@ -1,25 +1,13 @@
 package main
 
-import "fmt"
-
-// cmd: go run main.go deck.go
 func main() {
-	// var card string = "Ace of Spades"
-	card := newCard()
-	fmt.Println(card)
+	// greeting := "Hello world!"
+	// fmt.Println([]byte(greeting))
 
-	// Array: static array, Slice: dynamic array
-	// cards := deck{"Ace of Diamonds", newCard()}
-	// cards = append(cards, "Six of Spades")
-	// fmt.Println(cards)
+	// cards := newDeck()
+	// fmt.Println(cards.toString())
+	// cards.saveToFile("my-cards")
 
-	// cards.print()
-
-	cards := newDeck()
-
-	cards.print()
-}
-
-func newCard() string {
-	return "Five of Hearts"
+	newCards := newDeckFromFile("my-cards")
+	newCards.print()
 }
