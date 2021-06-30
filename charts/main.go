@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/go-echarts/go-echarts/charts"
-	"github.com/go-echarts/go-echarts/opts"
+	"github.com/go-echarts/go-echarts/v2/charts"
+	"github.com/go-echarts/go-echarts/v2/opts"
 )
 
 // generate random data for bar chart

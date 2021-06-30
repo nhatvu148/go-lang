@@ -4,9 +4,9 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/go-echarts/go-echarts/charts"
-	"github.com/go-echarts/go-echarts/opts"
-	"github.com/go-echarts/go-echarts/types"
+	"github.com/go-echarts/go-echarts/v2/charts"
+	"github.com/go-echarts/go-echarts/v2/opts"
+	"github.com/go-echarts/go-echarts/v2/types"
 )
 
 // generate random data for line chart
