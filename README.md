@@ -20,3 +20,7 @@
 - go get github.com/akavel/rsrc
 - rsrc -ico icon.ico
 - go build -o chart.exe
+
+# Use this chart library:
+
+- https://github.com/gonum/plot/wiki/Example-plots
