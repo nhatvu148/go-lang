@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/wcharczuk/go-chart/v2"
@@ -18,6 +19,16 @@ func makeRange(min, max int) []int {
 }
 
 func main() {
+	input := os.Args[1]
+	end, err := strconv.Atoi(input)
+	if err != nil {
+		log.Fatal("Input is not a number!")
+		return
+	} else if end > 50 {
+		log.Fatal("Input is too large!")
+		return
+	}
+
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
 			TickPosition: chart.TickPositionBetweenTicks,
@@ -42,7 +53,7 @@ func main() {
 
 	start := time.Now()
 
-	numRange := makeRange(1, 50)
+	numRange := makeRange(1, end)
 
 	for _, num := range numRange {
 		outName := fmt.Sprintf("result/output_%d.png", num)
