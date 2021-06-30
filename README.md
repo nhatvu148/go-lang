@@ -1,4 +1,7 @@
-# Reference: https://golang.org/pkg/
+# Reference:
+
+- https://awesome-go.com/
+- https://golang.org/pkg/
 
 # If using GOPATH (old way):
 
