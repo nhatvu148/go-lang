@@ -12,3 +12,9 @@
 - go clean -modcache
 - go install program@version
 - go install golang.org/x/tools/gopls@latest
+
+# Add icon to exe:
+
+- go get github.com/akavel/rsrc
+- rsrc -ico icon.ico
+- go build -o chart.exe
