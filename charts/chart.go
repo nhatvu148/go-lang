@@ -35,7 +35,7 @@ func main() {
 			ValueFormatter: func(v interface{}) string {
 				typed := v.(float64)
 				typedDate := chart.TimeFromFloat64(typed)
-				return fmt.Sprintf("%d-%d\n%d", typedDate.Month(), typedDate.Day(), typedDate.Year())
+				return fmt.Sprintf("%d-%d-%d", typedDate.Month(), typedDate.Day(), typedDate.Year())
 			},
 		},
 		Series: []chart.Series{
