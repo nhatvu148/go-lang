@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -19,6 +21,7 @@ type StateStatistics struct {
 }
 
 func main() {
+	start := time.Now()
 
 	db, err := sql.Open("mysql", "root:123456789@tcp(127.0.0.1:3306)/jmu")
 	defer db.Close()
@@ -35,9 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	alphaMap := make(map[int]string)
+	for i := 1; i <= 26; i++ {
+		alphaMap[i] = string(rune(i + 64))
+		alphaMap[i+26] = fmt.Sprintf("%v%v", "A", string(rune(i+64)))
+	}
 	menrList := [][]float64{}
 	devlList := [][]float64{}
-	i := 1
+	numofMeasurePoint := 0
 
 	for res.Next() {
 
@@ -53,18 +61,36 @@ func main() {
 			log.Fatal(err)
 		}
 
-		numMeasurePoint := state_statistics.NumofMeasurePoint
+		numofMeasurePoint = state_statistics.NumofMeasurePoint
 		var m1 []float64
 		json.Unmarshal([]byte(state_statistics.MeasurePointData), &m1)
-		menrList = append(menrList, m1[0:(numMeasurePoint+2)])
-		devlList = append(devlList, m1[(numMeasurePoint+2):(2*numMeasurePoint+4)])
-
-		// fmt.Printf("%v %v %v %v\n", i,
-		// 	state_statistics.ShipInfo_ID,
-		// 	state_statistics.NumofMeasurePoint)
-		i++
+		menrList = append(menrList, m1[0:(numofMeasurePoint+2)])
+		devlList = append(devlList, m1[(numofMeasurePoint+2):(2*numofMeasurePoint+4)])
 	}
 
-	fmt.Println(menrList[0])
-	fmt.Println(devlList[0])
+	f, err := excelize.OpenFile("Stress_Acc_template.xlsx")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i := 1; i <= len(menrList); i++ {
+		for j := 1; j <= numofMeasurePoint+2; j++ {
+			cell := fmt.Sprintf("%v%v", alphaMap[j], i+1)
+			f.SetCellValue("MENR", cell, menrList[i-1][j-1])
+		}
+	}
+
+	for i := 1; i <= len(devlList); i++ {
+		for j := 1; j <= numofMeasurePoint+2; j++ {
+			cell := fmt.Sprintf("%v%v", alphaMap[j], i+1)
+			f.SetCellValue("DEVL", cell, devlList[i-1][j-1])
+		}
+	}
+
+	if err := f.SaveAs("Stress_Acc.xlsx"); err != nil {
+		log.Fatal(err)
+	}
+
+	elapsed := time.Since(start)
+	log.Printf("Exporting excels took %s", elapsed)
 }
