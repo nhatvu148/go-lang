@@ -17,6 +17,9 @@
 - go clean -modcache
 - go install program@version
 - go install golang.org/x/tools/gopls@latest
+- go clean -i -x github.com/galdor/go-cmdline # remove a package
+- go run main.go -database="jmu" -host localhost -user "root" -password 123456789 -shipInfoID 1
+- .\report.exe --outDir "C:/Users/nhatv/OneDrive/Desktop/test/output"
 
 # Add icon to exe:
 

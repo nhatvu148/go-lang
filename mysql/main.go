@@ -40,22 +40,7 @@ func main() {
 	startTime := flag.String("startTime", "", "Start time")
 	endTime := flag.String("endTime", "", "End time")
 	outDir := flag.String("outDir", ".", "Output Directory")
-
-	// var svar string
-	// flag.StringVar(&svar, "svar", "bar", "a string var")
-
 	flag.Parse()
-
-	// fmt.Println("host:", *host)
-	// fmt.Println("user:", *user)
-	// fmt.Println("password:", *password)
-	// fmt.Println("database:", *database)
-	// fmt.Println("shipInfoID:", *shipInfoID)
-	// fmt.Println("startTime:", *startTime)
-	// fmt.Println("endTime:", *endTime)
-	// fmt.Println("outDir:", *outDir)
-	// // fmt.Println("svar:", svar)
-	// fmt.Println("tail:", flag.Args())
 
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", *user, *password, *host, *database))
 	defer db.Close()

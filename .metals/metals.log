@@ -1,0 +1,19 @@
+[0m2021.07.01 11:02:42 INFO  Started: Metals version 0.10.4 in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang' for client Visual Studio Code 1.57.1.[0m
+[0m2021.07.01 11:02:44 INFO  time: initialize in 2.63s[0m
+[0m2021.07.01 11:02:44 WARN  Build server is not auto-connectable.[0m
+[0m2021.07.01 11:02:44 WARN  no build tool detected in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.07.01 11:12:47 INFO  shutting down Metals[0m
+[0m2021.07.01 11:13:16 INFO  Started: Metals version 0.10.4 in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang' for client Visual Studio Code 1.57.1.[0m
+[0m2021.07.01 11:13:22 INFO  time: initialize in 6.28s[0m
+[0m2021.07.01 11:13:31 WARN  Build server is not auto-connectable.[0m
+[0m2021.07.01 11:13:31 WARN  no build tool detected in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.07.01 11:55:07 INFO  shutting down Metals[0m
+[0m2021.07.01 11:55:34 INFO  Started: Metals version 0.10.4 in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang' for client Visual Studio Code 1.57.1.[0m
+[0m2021.07.01 11:55:36 INFO  time: initialize in 1.96s[0m
+[0m2021.07.01 11:55:36 WARN  Build server is not auto-connectable.[0m
+[0m2021.07.01 11:55:36 WARN  no build tool detected in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
+[0m2021.07.01 12:04:40 INFO  shutting down Metals[0m
+[0m2021.07.01 12:05:06 INFO  Started: Metals version 0.10.4 in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang' for client Visual Studio Code 1.57.1.[0m
+[0m2021.07.01 12:05:08 INFO  time: initialize in 2.21s[0m
+[0m2021.07.01 12:05:08 WARN  Build server is not auto-connectable.[0m
+[0m2021.07.01 12:05:08 WARN  no build tool detected in workspace 'C:\Users\nhatv\Work\TechnoStar\go-lang'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. [0m
