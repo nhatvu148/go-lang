@@ -47,8 +47,8 @@ func (timeTicks) Ticks(min, max float64) []plot.Tick {
 }
 func toDateTime(s string) string {
 	var t time.Time
-	if n, err := strconv.ParseFloat(s, 64); err == nil {
-		t = time.Unix(int64(n), 0)
+	if n, err := strconv.ParseInt(s, 10, 64); err == nil {
+		t = time.Unix(n, 0)
 	}
 	return t.Format("2006-01-02 15:04:05")
 }
@@ -171,7 +171,7 @@ func main() {
 
 			p.Add(l)
 
-			outName := fmt.Sprintf("figures/output_%d.png", i)
+			outName := fmt.Sprintf("%s/images/graph-Stress-%d.png", *outDir, i+1)
 
 			// Save the plot to a PNG file.
 			if err := p.Save(10*vg.Inch, 5*vg.Inch, outName); err != nil {
