@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"sync"
@@ -13,10 +14,6 @@ import (
 )
 
 type StateStatistics struct {
-	State_Measure_ID  int
-	ShipInfo_ID       int
-	datetime          string
-	NumofProcess      int
 	NumofMeasurePoint int
 	MeasurePointData  string
 }
@@ -35,7 +32,32 @@ type Wave struct {
 func main() {
 	start := time.Now()
 
-	db, err := sql.Open("mysql", "root:123456789@tcp(127.0.0.1:3306)/jmu")
+	host := flag.String("host", "localhost", "Host name")
+	user := flag.String("user", "root", "User name")
+	password := flag.String("password", "123456789", "Password")
+	database := flag.String("database", "jmu", "Database")
+	shipInfoID := flag.Int("shipInfoID", 1, "Ship information ID")
+	startTime := flag.String("startTime", "", "Start time")
+	endTime := flag.String("endTime", "", "End time")
+	outDir := flag.String("outDir", ".", "Output Directory")
+
+	// var svar string
+	// flag.StringVar(&svar, "svar", "bar", "a string var")
+
+	flag.Parse()
+
+	// fmt.Println("host:", *host)
+	// fmt.Println("user:", *user)
+	// fmt.Println("password:", *password)
+	// fmt.Println("database:", *database)
+	// fmt.Println("shipInfoID:", *shipInfoID)
+	// fmt.Println("startTime:", *startTime)
+	// fmt.Println("endTime:", *endTime)
+	// fmt.Println("outDir:", *outDir)
+	// // fmt.Println("svar:", svar)
+	// fmt.Println("tail:", flag.Args())
+
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", *user, *password, *host, *database))
 	defer db.Close()
 
 	if err != nil {
@@ -52,7 +74,12 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		res, err := db.Query("SELECT * FROM statistics.state_statistics WHERE ShipInfo_ID='1'")
+		sql := fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d'", *shipInfoID)
+		if *startTime != "" && *endTime != "" {
+			sql = fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+		}
+
+		res, err := db.Query(sql)
 
 		defer res.Close()
 
@@ -66,10 +93,7 @@ func main() {
 
 		for res.Next() {
 			var state_statistics StateStatistics
-			err := res.Scan(&state_statistics.State_Measure_ID,
-				&state_statistics.ShipInfo_ID,
-				&state_statistics.datetime,
-				&state_statistics.NumofProcess,
+			err := res.Scan(
 				&state_statistics.NumofMeasurePoint,
 				&state_statistics.MeasurePointData)
 
@@ -103,7 +127,7 @@ func main() {
 			}
 		}
 
-		if err := f.SaveAs("Stress_Acc.xlsx"); err != nil {
+		if err := f.SaveAs(fmt.Sprintf("%s/Stress_Acc.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("DONE Stress_Acc")
@@ -111,7 +135,12 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		res, err := db.Query("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='1'")
+		sql := fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d'", *shipInfoID)
+		if *startTime != "" && *endTime != "" {
+			sql = fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+		}
+
+		res, err := db.Query(sql)
 
 		defer res.Close()
 
@@ -159,7 +188,7 @@ func main() {
 			f.SetCellValue("GYRO", cell4, yawList[i])
 		}
 
-		if err := f.SaveAs("Gyro.xlsx"); err != nil {
+		if err := f.SaveAs(fmt.Sprintf("%s/Gyro.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("DONE Gyro")
@@ -167,7 +196,12 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		res, err := db.Query("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='1'")
+		sql := fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d'", *shipInfoID)
+		if *startTime != "" && *endTime != "" {
+			sql = fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+		}
+
+		res, err := db.Query(sql)
 
 		defer res.Close()
 
@@ -210,7 +244,7 @@ func main() {
 			f.SetCellValue("WaveData", cell3, wavePList[i])
 		}
 
-		if err := f.SaveAs("Wave.xlsx"); err != nil {
+		if err := f.SaveAs(fmt.Sprintf("%s/Wave.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("DONE Wave")
