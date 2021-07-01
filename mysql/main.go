@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -31,6 +32,25 @@ type Wave struct {
 	datetime   string
 	WaveHeight float64
 	WavePeriod float64
+}
+type timeTicks struct{}
+
+func (timeTicks) Ticks(min, max float64) []plot.Tick {
+	tks := plot.DefaultTicks{}.Ticks(min, max)
+	for i, t := range tks {
+		if t.Label == "" { // Skip minor ticks, they are fine.
+			continue
+		}
+		tks[i].Label = toDateTime(t.Label)
+	}
+	return tks
+}
+func toDateTime(s string) string {
+	var t time.Time
+	if n, err := strconv.ParseFloat(s, 64); err == nil {
+		t = time.Unix(int64(n), 0)
+	}
+	return t.Format("2006-01-02 15:04:05")
 }
 
 func main() {
@@ -128,7 +148,7 @@ func main() {
 			n := len(menrList)
 			pts := make(plotter.XYs, n)
 			for j := 0; j < n; j++ {
-				pts[j].X = menrList[j][0]
+				pts[j].X = (menrList[j][0] - 25569) * 86400
 				pts[j].Y = menrList[j][i+2]
 			}
 			ptsSlice = append(ptsSlice, pts)
@@ -139,6 +159,7 @@ func main() {
 
 			p.Title.Text = chartNameSlice[i]
 			p.Y.Label.Text = "Stress [MPa]"
+			p.X.Tick.Marker = timeTicks{}
 			p.Add(plotter.NewGrid())
 
 			l, err := plotter.NewLine(pts)
@@ -149,12 +170,11 @@ func main() {
 			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
 
 			p.Add(l)
-			p.Legend.Add("line", l)
 
 			outName := fmt.Sprintf("figures/output_%d.png", i)
 
 			// Save the plot to a PNG file.
-			if err := p.Save(6*vg.Inch, 6*vg.Inch, outName); err != nil {
+			if err := p.Save(10*vg.Inch, 5*vg.Inch, outName); err != nil {
 				panic(err)
 			}
 		}
