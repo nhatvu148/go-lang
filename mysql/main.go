@@ -98,7 +98,7 @@ func main() {
 
 		menrList := [][]float64{}
 		devlList := [][]float64{}
-		chartNameSlice := []string{"DFP", "DFS", "SFP", "SFS", "DMP", "DMS", "SMP", "SMS", "DAP", "DAS", "SAP", "SAS", "L21", "L22", "L23", "L24", "L25", "L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48", "L49", "L410", "L51", "L52", "L53", "L54", "L55", "L56", "L57", "AFx", "AFy", "AFz", "AAx", "AAy", "AAz"}
+		stressNameSlice := []string{"DFP", "DFS", "SFP", "SFS", "DMP", "DMS", "SMP", "SMS", "DAP", "DAS", "SAP", "SAS", "L21", "L22", "L23", "L24", "L25", "L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48", "L49", "L410", "L51", "L52", "L53", "L54", "L55", "L56", "L57", "AFx", "AFy", "AFz", "AAx", "AAy", "AAz"}
 		numofMeasurePoint := 0
 
 		for res.Next() {
@@ -157,7 +157,7 @@ func main() {
 		for i, pts := range ptsSlice {
 			p := plot.New()
 
-			p.Title.Text = chartNameSlice[i]
+			p.Title.Text = stressNameSlice[i]
 			p.Y.Label.Text = "Stress [MPa]"
 			p.X.Tick.Marker = timeTicks{}
 			p.Add(plotter.NewGrid())
@@ -188,6 +188,7 @@ func main() {
 		if *startTime != "" && *endTime != "" {
 			sql = fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
 		}
+		gyroNameSlice := []string{"Roll Max", "Pitch Max", "Yaw Max"}
 
 		res, err := db.Query(sql)
 
@@ -240,6 +241,53 @@ func main() {
 		if err := f.SaveAs(fmt.Sprintf("%s/Gyro.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
+
+		// Draw Charts
+		ptsSlice := []plotter.XYs{}
+		n := len(rollList)
+		ptsRoll := make(plotter.XYs, n)
+		ptsPitch := make(plotter.XYs, n)
+		ptsYaw := make(plotter.XYs, n)
+		for j := 0; j < n; j++ {
+			const layout = "2006-01-02 15:04:05"
+			tm, _ := time.Parse(layout, dateList[j])
+			t := float64(tm.Unix())
+			ptsRoll[j].X = t
+			ptsRoll[j].Y = rollList[j]
+
+			ptsPitch[j].X = t
+			ptsPitch[j].Y = pitchList[j]
+
+			ptsYaw[j].X = t
+			ptsYaw[j].Y = yawList[j]
+		}
+		ptsSlice = append(ptsSlice, ptsRoll, ptsPitch, ptsYaw)
+
+		for i, pts := range ptsSlice {
+			p := plot.New()
+
+			p.Title.Text = gyroNameSlice[i]
+			p.Y.Label.Text = "Angle [deg]"
+			p.X.Tick.Marker = timeTicks{}
+			p.Add(plotter.NewGrid())
+
+			l, err := plotter.NewLine(pts)
+			if err != nil {
+				panic(err)
+			}
+			l.LineStyle.Width = vg.Points(1)
+			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+
+			p.Add(l)
+
+			outName := fmt.Sprintf("%s/images/graph-Gyro-%d.png", *outDir, i+1)
+
+			// Save the plot to a PNG file.
+			if err := p.Save(10*vg.Inch, 5*vg.Inch, outName); err != nil {
+				panic(err)
+			}
+		}
+
 		fmt.Println("DONE Gyro")
 	}()
 
