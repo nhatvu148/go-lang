@@ -1,5 +1,7 @@
 github.com/360EntSecGroup-Skylar/excelize/v2 v2.4.0 h1:X+2CWGf5W1tm2+W7Y/LLrAPLFSNlHATnqDudGoIzaxY=
 github.com/360EntSecGroup-Skylar/excelize/v2 v2.4.0/go.mod h1:p9lGPoVX3HYEbFRfjgrPWaaKsHe/2u4EM9DB/qoctgU=
+github.com/akavel/rsrc v0.10.2 h1:Zxm8V5eI1hW4gGaYsJQUhxpjkENuG91ki8B4zCrvEsw=
+github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=
