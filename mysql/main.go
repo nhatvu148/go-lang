@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image/color"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	_ "github.com/go-sql-driver/mysql"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/vg"
 )
 
 type StateStatistics struct {
@@ -74,6 +78,7 @@ func main() {
 
 		menrList := [][]float64{}
 		devlList := [][]float64{}
+		chartNameSlice := []string{"DFP", "DFS", "SFP", "SFS", "DMP", "DMS", "SMP", "SMS", "DAP", "DAS", "SAP", "SAS", "L21", "L22", "L23", "L24", "L25", "L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48", "L49", "L410", "L51", "L52", "L53", "L54", "L55", "L56", "L57", "AFx", "AFy", "AFz", "AAx", "AAy", "AAz"}
 		numofMeasurePoint := 0
 
 		for res.Next() {
@@ -98,6 +103,7 @@ func main() {
 			log.Fatal(err)
 		}
 
+		// Export Excel
 		for i := 1; i <= len(menrList); i++ {
 			for j := 1; j <= numofMeasurePoint+2; j++ {
 				cell := fmt.Sprintf("%v%v", alphaMap[j], i+1)
@@ -115,6 +121,44 @@ func main() {
 		if err := f.SaveAs(fmt.Sprintf("%s/Stress_Acc.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
+
+		// Draw Charts
+		ptsSlice := []plotter.XYs{}
+		for i := 0; i < numofMeasurePoint; i++ {
+			n := len(menrList)
+			pts := make(plotter.XYs, n)
+			for j := 0; j < n; j++ {
+				pts[j].X = menrList[j][0]
+				pts[j].Y = menrList[j][i+2]
+			}
+			ptsSlice = append(ptsSlice, pts)
+		}
+
+		for i, pts := range ptsSlice {
+			p := plot.New()
+
+			p.Title.Text = chartNameSlice[i]
+			p.Y.Label.Text = "Stress [MPa]"
+			p.Add(plotter.NewGrid())
+
+			l, err := plotter.NewLine(pts)
+			if err != nil {
+				panic(err)
+			}
+			l.LineStyle.Width = vg.Points(1)
+			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+
+			p.Add(l)
+			p.Legend.Add("line", l)
+
+			outName := fmt.Sprintf("figures/output_%d.png", i)
+
+			// Save the plot to a PNG file.
+			if err := p.Save(6*vg.Inch, 6*vg.Inch, outName); err != nil {
+				panic(err)
+			}
+		}
+
 		fmt.Println("DONE Stress_Acc")
 	}()
 
