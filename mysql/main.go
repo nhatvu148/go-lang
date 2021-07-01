@@ -188,7 +188,6 @@ func main() {
 		if *startTime != "" && *endTime != "" {
 			sql = fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
 		}
-		gyroNameSlice := []string{"Roll Max", "Pitch Max", "Yaw Max"}
 
 		res, err := db.Query(sql)
 
@@ -202,6 +201,7 @@ func main() {
 		rollList := []float64{}
 		pitchList := []float64{}
 		yawList := []float64{}
+		gyroNameSlice := []string{"Roll Max", "Pitch Max", "Yaw Max"}
 
 		for res.Next() {
 			var gyro Gyro
@@ -309,6 +309,7 @@ func main() {
 		dateList2 := []string{}
 		waveHList := []float64{}
 		wavePList := []float64{}
+		waveNameSlice := []string{"Wave Height", "Wave Period"}
 
 		for res.Next() {
 			var wave Wave
@@ -344,6 +345,53 @@ func main() {
 		if err := f.SaveAs(fmt.Sprintf("%s/Wave.xlsx", *outDir)); err != nil {
 			log.Fatal(err)
 		}
+
+		// Draw Charts
+		ptsSlice := []plotter.XYs{}
+		n := len(waveHList)
+		ptsWaveH := make(plotter.XYs, n)
+		ptsWaveP := make(plotter.XYs, n)
+		for j := 0; j < n; j++ {
+			const layout = "2006-01-02 15:04:05"
+			tm, _ := time.Parse(layout, dateList2[j])
+			t := float64(tm.Unix())
+			ptsWaveH[j].X = t
+			ptsWaveH[j].Y = waveHList[j]
+
+			ptsWaveP[j].X = t
+			ptsWaveP[j].Y = wavePList[j]
+		}
+		ptsSlice = append(ptsSlice, ptsWaveH, ptsWaveP)
+
+		for i, pts := range ptsSlice {
+			p := plot.New()
+
+			p.Title.Text = waveNameSlice[i]
+			if i == 0 {
+				p.Y.Label.Text = "Significant Wave Height [m]"
+			} else {
+				p.Y.Label.Text = "Wave Period [sec]"
+			}
+			p.X.Tick.Marker = timeTicks{}
+			p.Add(plotter.NewGrid())
+
+			l, err := plotter.NewLine(pts)
+			if err != nil {
+				panic(err)
+			}
+			l.LineStyle.Width = vg.Points(1)
+			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+
+			p.Add(l)
+
+			outName := fmt.Sprintf("%s/images/graph-Wave-%d.png", *outDir, i+1)
+
+			// Save the plot to a PNG file.
+			if err := p.Save(10*vg.Inch, 5*vg.Inch, outName); err != nil {
+				panic(err)
+			}
+		}
+
 		fmt.Println("DONE Wave")
 	}()
 
