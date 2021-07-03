@@ -33,6 +33,11 @@ type Wave struct {
 	WaveHeight float64
 	WavePeriod float64
 }
+type Map struct {
+	datetime  string
+	GPGGA_LAT float64
+	GPGGA_LON float64
+}
 type timeTicks struct{}
 
 func (timeTicks) Ticks(min, max float64) []plot.Tick {
@@ -79,13 +84,13 @@ func main() {
 		alphaMap[i+26] = fmt.Sprintf("%v%v", "A", string(rune(i+64)))
 	}
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
-		sql := fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d'", *shipInfoID)
+		sql := fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
 		if *startTime != "" && *endTime != "" {
-			sql = fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+			sql = fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
 		}
 
 		res, err := db.Query(sql)
@@ -196,9 +201,9 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		sql := fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d'", *shipInfoID)
+		sql := fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
 		if *startTime != "" && *endTime != "" {
-			sql = fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+			sql = fmt.Sprintf("SELECT datetime, Roll_Max, Pitch_Max, Yaw_Max FROM statistics.gyro WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
 		}
 
 		res, err := db.Query(sql)
@@ -305,9 +310,9 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		sql := fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d'", *shipInfoID)
+		sql := fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
 		if *startTime != "" && *endTime != "" {
-			sql = fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s'", *shipInfoID, *startTime, *endTime)
+			sql = fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
 		}
 
 		res, err := db.Query(sql)
@@ -405,6 +410,67 @@ func main() {
 		}
 
 		fmt.Println("DONE Wave")
+	}()
+
+	go func() {
+		defer wg.Done()
+		sql := fmt.Sprintf("SELECT datetime, GPGGA_LAT, GPGGA_LON FROM statistics.operation WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
+		if *startTime != "" && *endTime != "" {
+			sql = fmt.Sprintf("SELECT datetime, GPGGA_LAT, GPGGA_LON FROM statistics.operation WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
+		}
+
+		res, err := db.Query(sql)
+
+		defer res.Close()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		dateList3 := []string{}
+		latList := []float64{}
+		lonList := []float64{}
+
+		for res.Next() {
+			var mapL Map
+			err := res.Scan(
+				&mapL.datetime,
+				&mapL.GPGGA_LAT,
+				&mapL.GPGGA_LON,
+			)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			dateList3 = append(dateList3, mapL.datetime)
+			latList = append(latList, mapL.GPGGA_LAT)
+			lonList = append(lonList, mapL.GPGGA_LON)
+		}
+
+		f, err := excelize.OpenFile("Map_template.xlsx")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for i := 0; i < len(dateList3); i++ {
+			cell1 := fmt.Sprintf("%v%v", alphaMap[1], i+2)
+			cell2 := fmt.Sprintf("%v%v", alphaMap[2], i+2)
+			cell3 := fmt.Sprintf("%v%v", alphaMap[3], i+2)
+			cell4 := fmt.Sprintf("%v%v", alphaMap[4], i+2)
+			cell5 := fmt.Sprintf("%v%v", alphaMap[5], i+2)
+			f.SetCellValue("MapData", cell1, dateList3[i])
+			f.SetCellValue("MapData", cell2, latList[i])
+			f.SetCellValue("MapData", cell3, lonList[i])
+			f.SetCellValue("MapData", cell4, 1300*lonList[i]/360)
+			f.SetCellValue("MapData", cell5, 960*(latList[i]-19)/260)
+		}
+
+		if err := f.SaveAs(fmt.Sprintf("%s/Map.xlsx", *outDir)); err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("DONE Map")
 	}()
 
 	wg.Wait()
