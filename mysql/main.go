@@ -170,6 +170,18 @@ func main() {
 			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
 
 			p.Add(l)
+			// mean95, err := plotutil.NewErrorPoints(plotutil.MeanAndConf95, pts)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// medMinMax, err := plotutil.NewErrorPoints(plotutil.MedianAndMinMax, pts)
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// plotutil.AddLinePoints(p,
+			// 	"mean and 95% confidence", mean95,
+			// 	"median and minimum and maximum", medMinMax)
+			// plotutil.AddErrorBars(p, mean95, medMinMax)
 
 			outName := fmt.Sprintf("%s/images/graph-Stress-%d.png", *outDir, i+1)
 
