@@ -173,13 +173,13 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			l.LineStyle.Width = vg.Points(1.5)
+			l.LineStyle.Width = vg.Points(1)
 			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
 			yErr := make(plotter.Errors, len(pts))
 			for j := range pts {
-				yErr[j].Low = -2 //devlList[i][j+2]
-				yErr[j].High = 2 // devlList[i][j+2]
+				yErr[j].Low = (-1) * devlList[j][i+2]
+				yErr[j].High = devlList[j][i+2]
 			}
 
 			data := errPoints{
@@ -191,7 +191,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			yerrs.LineStyle.Width = vg.Points(0.5)
+			yerrs.LineStyle.Width = vg.Points(1)
 			yerrs.Color = color.RGBA{R: 237, G: 242, B: 248, A: 255}
 
 			p.Add(yerrs, l)
