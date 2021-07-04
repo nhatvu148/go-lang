@@ -29,7 +29,7 @@ type WindowsProcess struct {
 
 func main() {
 	start := time.Now()
-	port := flag.Int("port", 12345, "Port number")
+	port := flag.Int("port", 52525, "Port number")
 	nginxDir := flag.String("nginxDir", "C:/Users/nhatv/Work/TechnoStar/jmu-dt/bin/nginx", "Nginx directory")
 
 	flag.Parse()
