@@ -163,7 +163,6 @@ func main() {
 
 		for i, pts := range ptsSlice {
 			p := plot.New()
-
 			p.Title.Text = stressNameSlice[i]
 			p.Y.Label.Text = "Stress [MPa]"
 			p.X.Tick.Marker = timeTicks{}
@@ -176,6 +175,7 @@ func main() {
 			l.LineStyle.Width = vg.Points(1)
 			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
+			// Add Error Bars
 			yErr := make(plotter.Errors, len(pts))
 			for j := range pts {
 				yErr[j].Low = (-1) * devlList[j][i+2]
