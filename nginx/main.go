@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -37,7 +39,7 @@ func main() {
 	wg.Add(2)
 
 	go editNginx(*port, fmt.Sprintf("%s/conf/nginx.conf", *nginxDir), &wg, sig)
-	go restartNginx(*nginxDir, &wg, sig)
+	go restartNginx(*port, *nginxDir, &wg, sig)
 
 	wg.Wait()
 
@@ -45,20 +47,26 @@ func main() {
 	log.Printf("Editing config took %s", elapsed)
 }
 
-func restartNginx(nginxDir string, wg *sync.WaitGroup, sig chan struct{}) {
+func restartNginx(port int, nginxDir string, wg *sync.WaitGroup, sig chan struct{}) {
 	defer wg.Done()
 	<-sig
 
-	findKillProcess()
-	findKillProcess()
+	findKillProcess("nginx_dt.exe")
+	findKillProcess("nginx_dt.exe")
+
+	cmd := exec.Command("cmd", "/C", "cd", nginxDir, "&&", "start", "nginx_dt.exe")
+	cmd.Run()
+
+	cmd = exec.Command("cmd", "/C", "start", "explorer", "http://localhost:"+strconv.Itoa(port))
+	cmd.Run()
 }
 
-func findKillProcess() {
+func findKillProcess(name string) {
 	procs, err := processes()
 	if err != nil {
 		log.Fatal(err)
 	}
-	nginx_dt := findProcessByName(procs, "nginx_dt.exe")
+	nginx_dt := findProcessByName(procs, name)
 	if nginx_dt != nil {
 		// found it
 		KillProcess(nginx_dt.ProcessID)
