@@ -15,7 +15,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
 )
 
@@ -40,6 +39,11 @@ type Map struct {
 	GPGGA_LON float64
 }
 type timeTicks struct{}
+type errPoints struct {
+	plotter.XYs
+	plotter.YErrors
+	plotter.XErrors
+}
 
 func (timeTicks) Ticks(min, max float64) []plot.Tick {
 	tks := plot.DefaultTicks{}.Ticks(min, max)
@@ -169,25 +173,28 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			l.LineStyle.Width = vg.Points(1)
+			l.LineStyle.Width = vg.Points(1.5)
 			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
-			p.Add(l)
-			// mean95, err := plotutil.NewErrorPoints(plotutil.MeanAndConf95, pts)
-			// if err != nil {
-			// 	panic(err)
-			// }
-			medMinMax, err := plotutil.NewErrorPoints(plotutil.MedianAndMinMax, pts)
+			yErr := make(plotter.Errors, len(pts))
+			for j := range pts {
+				yErr[j].Low = -2 //devlList[i][j+2]
+				yErr[j].High = 2 // devlList[i][j+2]
+			}
+
+			data := errPoints{
+				XYs:     pts,
+				YErrors: plotter.YErrors(yErr),
+			}
+
+			yerrs, err := plotter.NewYErrorBars(data)
 			if err != nil {
 				panic(err)
 			}
-			// plotutil.AddLinePoints(p,
-			// 	"mean and 95% confidence", mean95,
-			// 	"median and minimum and maximum", medMinMax)
-			// plotutil.AddErrorBars(p, mean95, medMinMax)
-			plotutil.AddLinePoints(p,
-				"median and minimum and maximum", medMinMax)
-			plotutil.AddErrorBars(p, medMinMax)
+			yerrs.LineStyle.Width = vg.Points(0.5)
+			yerrs.Color = color.RGBA{R: 237, G: 242, B: 248, A: 255}
+
+			p.Add(yerrs, l)
 
 			outName := fmt.Sprintf("%s/images/graph-Stress-%d.png", *outDir, i+1)
 
