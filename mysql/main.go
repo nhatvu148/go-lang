@@ -15,6 +15,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
 	"gonum.org/v1/plot/vg"
 )
 
@@ -172,21 +173,24 @@ func main() {
 				panic(err)
 			}
 			l.LineStyle.Width = vg.Points(1)
-			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
 			p.Add(l)
 			// mean95, err := plotutil.NewErrorPoints(plotutil.MeanAndConf95, pts)
 			// if err != nil {
 			// 	panic(err)
 			// }
-			// medMinMax, err := plotutil.NewErrorPoints(plotutil.MedianAndMinMax, pts)
-			// if err != nil {
-			// 	panic(err)
-			// }
+			medMinMax, err := plotutil.NewErrorPoints(plotutil.MedianAndMinMax, pts)
+			if err != nil {
+				panic(err)
+			}
 			// plotutil.AddLinePoints(p,
 			// 	"mean and 95% confidence", mean95,
 			// 	"median and minimum and maximum", medMinMax)
 			// plotutil.AddErrorBars(p, mean95, medMinMax)
+			plotutil.AddLinePoints(p,
+				"median and minimum and maximum", medMinMax)
+			plotutil.AddErrorBars(p, medMinMax)
 
 			outName := fmt.Sprintf("%s/images/graph-Stress-%d.png", *outDir, i+1)
 
@@ -293,7 +297,7 @@ func main() {
 				panic(err)
 			}
 			l.LineStyle.Width = vg.Points(1)
-			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
 			p.Add(l)
 
@@ -397,7 +401,7 @@ func main() {
 				panic(err)
 			}
 			l.LineStyle.Width = vg.Points(1)
-			l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+			l.LineStyle.Color = color.RGBA{R: 79, G: 129, B: 189, A: 255}
 
 			p.Add(l)
 
@@ -459,11 +463,17 @@ func main() {
 			cell3 := fmt.Sprintf("%v%v", alphaMap[3], i+2)
 			cell4 := fmt.Sprintf("%v%v", alphaMap[4], i+2)
 			cell5 := fmt.Sprintf("%v%v", alphaMap[5], i+2)
+			cell6 := fmt.Sprintf("%v%v", alphaMap[6], i+2)
 			f.SetCellValue("MapData", cell1, dateList3[i])
 			f.SetCellValue("MapData", cell2, latList[i])
 			f.SetCellValue("MapData", cell3, lonList[i])
 			f.SetCellValue("MapData", cell4, 1300*lonList[i]/360)
 			f.SetCellValue("MapData", cell5, 960*(latList[i]-19)/260)
+
+			if i == 0 || i == len(dateList3)-1 {
+				f.SetCellValue("MapData", cell6,
+					fmt.Sprintf("Date: %v\nLat(deg): %v\nLon(deg): %v", dateList3[i], latList[i], lonList[i]))
+			}
 		}
 
 		if err := f.SaveAs(fmt.Sprintf("%s/Map.xlsx", *outDir)); err != nil {
