@@ -44,10 +44,7 @@ type timeTicks struct{}
 func (timeTicks) Ticks(min, max float64) []plot.Tick {
 	tks := plot.DefaultTicks{}.Ticks(min, max)
 	for i, t := range tks {
-		if t.Label == "" { // Skip minor ticks, they are fine.
-			continue
-		}
-		tks[i].Label = toDateTime(t.Label)
+		tks[i].Label = toDateTime(strconv.FormatFloat(t.Value, 'f', -1, 64))
 	}
 	return tks
 }
@@ -56,7 +53,7 @@ func toDateTime(s string) string {
 	if n, err := strconv.ParseInt(s, 10, 64); err == nil {
 		t = time.Unix(n, 0)
 	}
-	return t.Format("2006-01-02 15:04:05")
+	return t.Format("2006-01-02")
 }
 
 func main() {
