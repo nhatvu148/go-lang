@@ -1,5 +1,8 @@
 # Reference:
 
+- https://yourbasic.org/golang/
+- https://zetcode.com/all/#go
+- https://gobyexample.com/
 - https://awesome-go.com/
 - https://golang.org/pkg/
 
