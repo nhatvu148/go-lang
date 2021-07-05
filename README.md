@@ -43,6 +43,12 @@
 
 # When importing local modules:
 
+- go mod tidy
+- go mod vendor
+- add local packages to the vendor folder
+- go run .
+
+Or if using GOPATH:
 - env GO111MODULE=off go run await.go
 - env GO111MODULE=off go build await.go
 
