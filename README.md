@@ -45,3 +45,7 @@
 
 - env GO111MODULE=off go run await.go
 - env GO111MODULE=off go build await.go
+
+# Check Go Environment:
+
+- go env
