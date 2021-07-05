@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -45,15 +44,11 @@ func main() {
 
 OuterLoop:
 	for {
-		time.Sleep(100 * time.Millisecond)
 		select {
 		case s1 := <-proc:
 			fmt.Println(s1)
 		case <-quit:
-			fmt.Println("done")
 			break OuterLoop
-		default:
-			fmt.Println("No value received")
 		}
 	}
 
@@ -80,8 +75,8 @@ func restartNginx(port int, nginxDir string, wg *sync.WaitGroup, sig chan struct
 	cmd := exec.Command("cmd", "/C", "cd", nginxDir, "&&", "start", "nginx_dt.exe")
 	cmd.Run()
 
-	cmd = exec.Command("cmd", "/C", "start", "explorer", "http://localhost:"+strconv.Itoa(port))
-	cmd.Run()
+	// cmd = exec.Command("cmd", "/C", "start", "explorer", "http://localhost:"+strconv.Itoa(port))
+	// cmd.Run()
 }
 
 func findKillProcess(name string) int {
