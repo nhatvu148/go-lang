@@ -40,3 +40,8 @@
 - https://www.get-digital-help.com/use-a-map-in-an-excel-chart/
 - https://support.microsoft.com/en-us/office/create-a-table-in-excel-bf0ce08b-d012-42ec-8ecf-a2259c9faf3f
 - https://support.microsoft.com/en-us/office/overview-of-formulas-in-excel-ecfdc708-9162-49e8-b993-c311f47ca173
+
+# When importing local modules:
+
+- env GO111MODULE=off go run await.go
+- env GO111MODULE=off go build await.go
