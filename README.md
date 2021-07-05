@@ -3,6 +3,7 @@
 - https://yourbasic.org/golang/
 - https://zetcode.com/all/#go
 - https://gobyexample.com/
+- https://www.youtube.com/watch?v=SmoM1InWXr0
 - https://awesome-go.com/
 - https://golang.org/pkg/
 
