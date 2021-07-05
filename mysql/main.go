@@ -29,9 +29,9 @@ type Gyro struct {
 	Yaw_Max   float64
 }
 type Wave struct {
-	datetime   string
-	WaveHeight float64
-	WavePeriod float64
+	datetime                          string
+	SignificantWaveHeight_Arbitrary00 float64
+	WavePeriod_Arbitrary00            float64
 }
 type Map struct {
 	datetime  string
@@ -318,9 +318,9 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		sql := fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
+		sql := fmt.Sprintf("SELECT datetime, SignificantWaveHeight_Arbitrary00, WavePeriod_Arbitrary00 FROM statistics.compweather WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
 		if *startTime != "" && *endTime != "" {
-			sql = fmt.Sprintf("SELECT datetime, WaveHeight, WavePeriod FROM statistics.waves WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
+			sql = fmt.Sprintf("SELECT datetime, SignificantWaveHeight_Arbitrary00, WavePeriod_Arbitrary00 FROM statistics.compweather WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
 		}
 
 		res, err := db.Query(sql)
@@ -340,8 +340,8 @@ func main() {
 			var wave Wave
 			err := res.Scan(
 				&wave.datetime,
-				&wave.WaveHeight,
-				&wave.WavePeriod,
+				&wave.SignificantWaveHeight_Arbitrary00,
+				&wave.WavePeriod_Arbitrary00,
 			)
 
 			if err != nil {
@@ -349,8 +349,8 @@ func main() {
 			}
 
 			dateList2 = append(dateList2, wave.datetime)
-			waveHList = append(waveHList, wave.WaveHeight)
-			wavePList = append(wavePList, wave.WavePeriod)
+			waveHList = append(waveHList, wave.SignificantWaveHeight_Arbitrary00)
+			wavePList = append(wavePList, wave.WavePeriod_Arbitrary00)
 		}
 
 		f, err := excelize.OpenFile("Wave_template.xlsx")
