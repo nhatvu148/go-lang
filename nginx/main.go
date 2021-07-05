@@ -36,10 +36,26 @@ func main() {
 
 	var wg sync.WaitGroup
 	sig := make(chan struct{})
+	quit := make(chan struct{})
+	proc := make(chan int)
 	wg.Add(2)
 
 	go editNginx(*port, fmt.Sprintf("%s/conf/nginx.conf", *nginxDir), &wg, sig)
-	go restartNginx(*port, *nginxDir, &wg, sig)
+	go restartNginx(*port, *nginxDir, &wg, sig, proc, quit)
+
+OuterLoop:
+	for {
+		time.Sleep(100 * time.Millisecond)
+		select {
+		case s1 := <-proc:
+			fmt.Println(s1)
+		case <-quit:
+			fmt.Println("done")
+			break OuterLoop
+		default:
+			fmt.Println("No value received")
+		}
+	}
 
 	wg.Wait()
 
@@ -47,12 +63,19 @@ func main() {
 	log.Printf("Editing config took %s", elapsed)
 }
 
-func restartNginx(port int, nginxDir string, wg *sync.WaitGroup, sig chan struct{}) {
+func restartNginx(port int, nginxDir string, wg *sync.WaitGroup, sig chan struct{}, proc chan int, quit chan struct{}) {
 	defer wg.Done()
 	<-sig
 
-	findKillProcess("nginx_dt.exe")
-	findKillProcess("nginx_dt.exe")
+	for {
+		procId := findKillProcess("nginx_dt.exe")
+		if procId == -1 {
+			close(quit)
+			break
+		} else {
+			proc <- procId
+		}
+	}
 
 	cmd := exec.Command("cmd", "/C", "cd", nginxDir, "&&", "start", "nginx_dt.exe")
 	cmd.Run()
@@ -61,16 +84,17 @@ func restartNginx(port int, nginxDir string, wg *sync.WaitGroup, sig chan struct
 	cmd.Run()
 }
 
-func findKillProcess(name string) {
+func findKillProcess(name string) int {
 	procs, err := processes()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	nginx_dt := findProcessByName(procs, name)
 	if nginx_dt != nil {
-		// found it
 		KillProcess(nginx_dt.ProcessID)
+		return nginx_dt.ProcessID
 	}
+	return -1
 }
 
 func editNginx(port int, confFile string, wg *sync.WaitGroup, sig chan struct{}) {
@@ -174,7 +198,6 @@ func KillProcess(pid int) {
 	}
 	for _, p := range processes {
 		if p.Pid == int32(pid) {
-			fmt.Println(p.Pid)
 			p.Kill()
 			// p.Terminate()
 		}
