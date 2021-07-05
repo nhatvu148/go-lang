@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"./async"
+	"github.com/nhatvu148/go-lang/async"
 )
 
 func DoneAsync() int {

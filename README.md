@@ -43,9 +43,23 @@
 
 # When importing local modules:
 
+Main method:
+- In async folder: go mod init github.com/nhatvu148/go-lang/async
+- Enter hackerrank folder: go mod edit -replace=github.com/nhatvu148/go-lang/async=../async
+- go get github.com/nhatvu148/go-lang/async
+- import in code: 
+```
+- Reference: https://golang.org/doc/tutorial/call-module-code
+
+import (
+    "github.com/nhatvu148/go-lang/async"
+)
+```
+
+Or using vendor folder:
 - go mod tidy
 - go mod vendor
-- add local packages to the vendor folder
+- copy local package folders to the vendor folder
 - go run .
 
 Or if using GOPATH:
