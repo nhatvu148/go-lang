@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"os"
+	"os/exec"
 	"strconv"
 	"sync"
 	"time"
@@ -71,6 +73,8 @@ func main() {
 	startTime := flag.String("startTime", "", "Start time")
 	endTime := flag.String("endTime", "", "End time")
 	outDir := flag.String("outDir", ".", "Output Directory")
+	jpt_root := flag.String("jpt_root", "D:/AKIYAMA/Trunk_Rev56717_ForWeb/bin/Release/x64", "Jupiter Root Directory")
+	outCsvDir := flag.String("outDir", fmt.Sprintf("%s/TechnoStar/00", os.TempDir()), "Output CSV Directory")
 	flag.Parse()
 
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", *user, *password, *host, *database))
@@ -86,7 +90,19 @@ func main() {
 		alphaMap[i+26] = fmt.Sprintf("%v%v", "A", string(rune(i+64)))
 	}
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(5)
+
+	go func() {
+		defer wg.Done()
+		args := []string{
+			"cmd",
+			"/C",
+			fmt.Sprintf("%s/Start_It.bat -b -mcr runme.jpl", *jpt_root),
+		}
+
+		CmdExec(args...)
+		Transform(*outCsvDir)
+	}()
 
 	go func() {
 		defer wg.Done()
@@ -491,4 +507,20 @@ func main() {
 	wg.Wait()
 	elapsed := time.Since(start)
 	log.Printf("Exporting excels took %s", elapsed)
+}
+
+func CmdExec(args ...string) (string, error) {
+
+	baseCmd := args[0]
+	cmdArgs := args[1:]
+
+	fmt.Printf("Exec: %v", args)
+
+	cmd := exec.Command(baseCmd, cmdArgs...)
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(out), nil
 }
