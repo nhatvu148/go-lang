@@ -19,8 +19,8 @@ import (
 )
 
 type StateStatistics struct {
-	NumofMeasurePoint int
-	MeasurePointData  string
+	MENR string
+	DEVL string
 }
 type Gyro struct {
 	datetime  string
@@ -90,9 +90,9 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		sql := fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
+		sql := fmt.Sprintf("SELECT MENR, DEVL FROM statistics.state_statistics WHERE ShipInfo_ID='%d' ORDER BY datetime ASC", *shipInfoID)
 		if *startTime != "" && *endTime != "" {
-			sql = fmt.Sprintf("SELECT NumofMeasurePoint, MeasurePointData FROM statistics.state_statistics WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
+			sql = fmt.Sprintf("SELECT MENR, DEVL FROM statistics.state_statistics WHERE ShipInfo_ID='%d' AND datetime BETWEEN '%s' AND '%s' ORDER BY datetime ASC", *shipInfoID, *startTime, *endTime)
 		}
 
 		res, err := db.Query(sql)
@@ -111,18 +111,18 @@ func main() {
 		for res.Next() {
 			var state_statistics StateStatistics
 			err := res.Scan(
-				&state_statistics.NumofMeasurePoint,
-				&state_statistics.MeasurePointData)
+				&state_statistics.MENR,
+				&state_statistics.DEVL)
 
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			numofMeasurePoint = state_statistics.NumofMeasurePoint
-			var m1 []float64
-			json.Unmarshal([]byte(state_statistics.MeasurePointData), &m1)
-			menrList = append(menrList, m1[0:(numofMeasurePoint+2)])
-			devlList = append(devlList, m1[(numofMeasurePoint+2):(2*numofMeasurePoint+4)])
+			var menr, devl []float64
+			json.Unmarshal([]byte(state_statistics.MENR), &menr)
+			json.Unmarshal([]byte(state_statistics.DEVL), &devl)
+			menrList = append(menrList, menr)
+			devlList = append(devlList, devl)
 		}
 
 		f, err := excelize.OpenFile("Stress_Acc_template.xlsx")
@@ -130,6 +130,7 @@ func main() {
 			log.Fatal(err)
 		}
 
+		numofMeasurePoint = len(menrList[0]) - 2
 		// Export Excel
 		for i := 1; i <= len(menrList); i++ {
 			for j := 1; j <= numofMeasurePoint+2; j++ {
