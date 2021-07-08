@@ -74,7 +74,7 @@ func main() {
 	endTime := flag.String("endTime", "", "End time")
 	outDir := flag.String("outDir", ".", "Output Directory")
 	jpt_root := flag.String("jpt_root", "D:/AKIYAMA/Trunk_Rev56717_ForWeb/bin/Release/x64", "Jupiter Root Directory")
-	outCsvDir := flag.String("outDir", fmt.Sprintf("%s/TechnoStar/00", os.TempDir()), "Output CSV Directory")
+	outCsvDir := flag.String("outCsvDir", fmt.Sprintf("%s/TechnoStar/00", os.TempDir()), "Output CSV Directory")
 	flag.Parse()
 
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", *user, *password, *host, *database))
