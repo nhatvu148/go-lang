@@ -10,10 +10,11 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
+	"github.com/360EntSecGroup-Skylar/excelize"
 	_ "github.com/go-sql-driver/mysql"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -39,6 +40,17 @@ type Map struct {
 	datetime  string
 	GPGGA_LAT float64
 	GPGGA_LON float64
+}
+type Trim03 struct {
+	BMDATA string
+}
+type JSONType struct {
+	FrNo     string `json:"FR.NO."`
+	FromAp   string `json:"FROM AP"`
+	ActualBm string `json:"ACTUAL B.M."`
+	Hog      string `json:"ALLOWABLE B.M (HOG)"`
+	Sag      string `json:"ALLOWABLE B.M (SAG)"`
+	Percent  string `json:"PERCENT"`
 }
 type timeTicks struct{}
 type errPoints struct {
@@ -89,8 +101,11 @@ func main() {
 		alphaMap[i] = string(rune(i + 64))
 		alphaMap[i+26] = fmt.Sprintf("%v%v", "A", string(rune(i+64)))
 	}
+
+	fromApChan := make(chan []float64)
+	csvChan := make(chan [][]string)
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(7)
 
 	go func() {
 		defer wg.Done()
@@ -101,7 +116,63 @@ func main() {
 		}
 
 		CmdExec(args...)
-		Transform(*outCsvDir)
+		CsvToJson(*outCsvDir, csvChan)
+	}()
+
+	go func() {
+		defer wg.Done()
+		GetFromAp(*startTime, fromApChan, csvChan)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		sql := fmt.Sprintf(`SELECT BMDATA FROM statistics.trim03 WHERE ShipInfo_ID="%d" AND ABS(TIME_TO_SEC(TIMEDIFF(datetime, "%s"))) = (
+			SELECT MIN(T3.timediff) AS timediff FROM
+			(SELECT T2.Trim03_ID, T2.timediff, T2.datetime FROM
+			(SELECT Trim03_ID, ABS(TIME_TO_SEC(TIMEDIFF(datetime, "%s"))) AS timediff, datetime FROM statistics.trim03) AS T2) AS T3
+			);`, *shipInfoID, "2021-01-15 08:09:47", "2021-01-15 08:09:47")
+		if *startTime != "" && *endTime != "" {
+			sql = fmt.Sprintf(`SELECT BMDATA FROM statistics.trim03 WHERE ShipInfo_ID="%d" AND ABS(TIME_TO_SEC(TIMEDIFF(datetime, "%s"))) = (
+				SELECT MIN(T3.timediff) AS timediff FROM
+				(SELECT T2.Trim03_ID, T2.timediff, T2.datetime FROM
+				(SELECT Trim03_ID, ABS(TIME_TO_SEC(TIMEDIFF(datetime, "%s"))) AS timediff, datetime FROM statistics.trim03) AS T2) AS T3
+				);`, *shipInfoID, *startTime, *startTime)
+		}
+
+		res, err := db.Query(sql)
+
+		defer res.Close()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		bmData := []JSONType{}
+		fromApArr := []float64{}
+		for res.Next() {
+			var trim03 Trim03
+			err := res.Scan(
+				&trim03.BMDATA)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			str := strings.ReplaceAll(trim03.BMDATA, "'", `"`)
+
+			json.Unmarshal([]byte(str), &bmData)
+		}
+
+		for _, bm := range bmData {
+			val, err := strconv.ParseFloat(bm.FromAp, 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fromApArr = append(fromApArr, val)
+		}
+
+		fromApChan <- fromApArr
 	}()
 
 	go func() {
