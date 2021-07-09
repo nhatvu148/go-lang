@@ -11,12 +11,15 @@ import (
 
 type MeasureType struct {
 	Datetime string  `json:"datetime"`
-	FromAp   float64 `json:"fromAp"`
 	AftData  float64 `json:"aftData"`
 	MidData  float64 `json:"midData"`
 	ForeData float64 `json:"foreData"`
 }
 type MwDevType struct {
+	X    float64
+	Calc float64
+}
+type MainMwDevType struct {
 	X    float64
 	Calc float64
 }
@@ -82,6 +85,8 @@ func GetFromAp(startTime string, fromApChan chan []float64, csvChan chan [][]str
 
 	resIndex := []int{}
 	mwDev := []MwDevType{}
+	mainMwDev := []MainMwDevType{}
+
 	fromApSrc := records[0][(numOfSec + 1):(numOfSec*2 + 1)]
 	arr := records[0][(numOfSec*2 + 2):]
 
@@ -118,16 +123,29 @@ func GetFromAp(startTime string, fromApChan chan []float64, csvChan chan [][]str
 		mwDev = append(mwDev, data)
 	}
 
+	for _, ir := range []int{27, 30, 35} {
+		calc, err := strconv.ParseFloat(arr[(numOfSec+1)*tmIndex+ir], 64)
+		exitOnError(err)
+		mainSecs := MainMwDevType{X: float64(ir), Calc: calc}
+
+		mainMwDev = append(mainMwDev, mainSecs)
+	}
+
 	// fmt.Println(resIndex)
 	// fmt.Println(mwDev)
+	bytes1, err := json.Marshal(mwDev)
+	exitOnError(err)
+	file1, err := os.Create("mwDev.json")
+	exitOnError(err)
+	file1.WriteString(string(bytes1))
+
+	bytes2, err := json.Marshal(mainMwDev)
+	exitOnError(err)
+	file2, err := os.Create("mainMwDev.json")
+	exitOnError(err)
+	file2.WriteString(string(bytes2))
+
 	fmt.Println("DONE mwDev")
-	bytes, err := json.Marshal(mwDev)
-	exitOnError(err)
-
-	file, err := os.Create("mwDev.json")
-	exitOnError(err)
-
-	file.WriteString(string(bytes))
 }
 
 func exitOnError(err error) {
