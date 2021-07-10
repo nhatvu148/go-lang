@@ -112,7 +112,7 @@ func main() {
 		args := []string{
 			"cmd",
 			"/C",
-			fmt.Sprintf("%s/Start_It.bat -b -mcr runme.jpl", *jpt_root),
+			fmt.Sprintf("%s/Start_It.bat -b -mcr -keywebapp runme.jpl", *jpt_root),
 		}
 
 		CmdExec(args...)
