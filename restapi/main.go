@@ -2,112 +2,159 @@ package main
 
 import (
 	"encoding/json"
-	"log"
-	"math/rand"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
-// Book Struct (Model)
-type Book struct {
-	ID     string  `json:"id"`
-	Isbn   string  `json:"isbn"`
-	Title  string  `json:"title"`
-	Author *Author `json:"author"`
+// User is a struct that represents a user in our application
+type User struct {
+	FullName string `json:"fullName"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
-// Author Struct
-type Author struct {
-	Firstname string `json:"firstname"`
-	Lastname  string `json:"lastname"`
+// Post is a struct that represents a single post
+type Post struct {
+	Title  string `json:"title"`
+	Body   string `json:"body"`
+	Author User   `json:"author"`
 }
 
-// Init books var as a slice Book struct
-var books []Book
-
-// Get All Books
-func getBooks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(books)
-}
-
-// Get Single Book
-func getBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r) // Get params
-	// Loop through books and find with id
-	for _, item := range books {
-		if item.ID == params["id"] {
-			json.NewEncoder(w).Encode(item)
-			return
-		}
-	}
-
-	json.NewEncoder(w).Encode(&Book{})
-}
-
-// Create a new Book
-func createBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var book Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
-	book.ID = strconv.Itoa(rand.Intn(1000000)) // Mock ID - not safe
-	books = append(books, book)
-
-	json.NewEncoder(w).Encode(book)
-}
-
-// Get All Books
-func updateBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)
-	for index, item := range books {
-		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
-			var book Book
-			_ = json.NewDecoder(r.Body).Decode(&book)
-			book.ID = params["id"]
-			books = append(books, book)
-
-			json.NewEncoder(w).Encode(book)
-			return
-		}
-	}
-
-	json.NewEncoder(w).Encode(books)
-}
-
-// Get All Books
-func deleteBooks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)
-	for index, item := range books {
-		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
-			break
-		}
-	}
-
-	json.NewEncoder(w).Encode(books)
-}
+var posts []Post = []Post{}
 
 func main() {
-	// Init Router
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 
-	// Mock Data
-	books = append(books, Book{ID: "1", Isbn: "429382", Title: "Book One", Author: &Author{Firstname: "John", Lastname: "Doe"}})
-	books = append(books, Book{ID: "2", Isbn: "234243", Title: "Book Two", Author: &Author{Firstname: "Will", Lastname: "Smith"}})
+	router.HandleFunc("/posts", addItem).Methods("POST")
 
-	// Route Handlers / Endpoints
-	r.HandleFunc("/api/books", getBooks).Methods("GET")
-	r.HandleFunc("/api/books/{id}", getBook).Methods("GET")
-	r.HandleFunc("/api/books", createBook).Methods("POST")
-	r.HandleFunc("/api/books/{id}", updateBook).Methods("PUT")
-	r.HandleFunc("/api/books/{id}", deleteBooks).Methods("DELETE")
+	router.HandleFunc("/posts", getAllPosts).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":8000", r))
+	router.HandleFunc("/posts/{id}", getPost).Methods("GET")
 
+	router.HandleFunc("/posts/{id}", updatePost).Methods("PUT")
+
+	router.HandleFunc("/posts/{id}", patchPost).Methods("PATCH")
+
+	router.HandleFunc("/posts/{id}", deletePost).Methods("DELETE")
+
+	http.ListenAndServe(":8000", router)
+}
+
+func getPost(w http.ResponseWriter, r *http.Request) {
+	// get the ID of the post from the route parameter
+	var idParam string = mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		// there was an error
+		w.WriteHeader(400)
+		w.Write([]byte("ID could not be converted to integer"))
+		return
+	}
+
+	// error checking
+	if id >= len(posts) {
+		w.WriteHeader(404)
+		w.Write([]byte("No post found with specified ID"))
+		return
+	}
+
+	post := posts[id]
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+func getAllPosts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(posts)
+}
+
+func addItem(w http.ResponseWriter, r *http.Request) {
+	// get Item value from the JSON body
+	var newPost Post
+	json.NewDecoder(r.Body).Decode(&newPost)
+
+	posts = append(posts, newPost)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(posts)
+}
+
+func updatePost(w http.ResponseWriter, r *http.Request) {
+	// get the ID of the post from the route parameters
+	var idParam string = mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("ID could not be converted to integer"))
+		return
+	}
+
+	// error checking
+	if id >= len(posts) {
+		w.WriteHeader(404)
+		w.Write([]byte("No post found with specified ID"))
+		return
+	}
+
+	// get the value from JSON body
+	var updatedPost Post
+	json.NewDecoder(r.Body).Decode(&updatedPost)
+
+	posts[id] = updatedPost
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedPost)
+}
+
+func patchPost(w http.ResponseWriter, r *http.Request) {
+	// get the ID of the post from the route parameters
+	var idParam string = mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("ID could not be converted to integer"))
+		return
+	}
+
+	// error checking
+	if id >= len(posts) {
+		w.WriteHeader(404)
+		w.Write([]byte("No post found with specified ID"))
+		return
+	}
+
+	// get the current value
+	post := &posts[id]
+	json.NewDecoder(r.Body).Decode(post)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
+}
+
+func deletePost(w http.ResponseWriter, r *http.Request) {
+	// get the ID of the post from the route parameters
+	var idParam string = mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte("ID could not be converted to integer"))
+		return
+	}
+
+	// error checking
+	if id >= len(posts) {
+		w.WriteHeader(404)
+		w.Write([]byte("No post found with specified ID"))
+		return
+	}
+
+	// Delete the post from the slice
+	// https://github.com/golang/go/wiki/SliceTricks#delete
+	posts = append(posts[:id], posts[id+1:]...)
+
+	w.WriteHeader(200)
 }
