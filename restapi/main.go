@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -26,6 +28,7 @@ var posts []Post = []Post{}
 
 func main() {
 	router := mux.NewRouter()
+	const port string = ":8000"
 
 	router.HandleFunc("/posts", addItem).Methods("POST")
 
@@ -39,7 +42,12 @@ func main() {
 
 	router.HandleFunc("/posts/{id}", deletePost).Methods("DELETE")
 
-	http.ListenAndServe(":8000", router)
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Up and running...")
+	})
+
+	log.Printf("Server listening on port %s\n", port)
+	http.ListenAndServe(port, router)
 }
 
 func getPost(w http.ResponseWriter, r *http.Request) {
