@@ -1,11 +1,11 @@
 package main
 
 import (
-	"encoding/json"
+	"database/sql"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -24,23 +24,50 @@ type Post struct {
 	Author User   `json:"author"`
 }
 
+var db *sql.DB
+var err error
 var posts []Post = []Post{}
 
 func main() {
+	host := flag.String("host", "localhost", "Host name")
+	user := flag.String("user", "root", "User name")
+	password := flag.String("password", "123456789", "Password")
+	database := flag.String("database", "jmu", "Database")
+	// shipInfoID := flag.Int("shipInfoID", 1, "Ship information ID")
+	// startTime := flag.String("startTime", "", "Start time")
+	// endTime := flag.String("endTime", "", "End time")
+	// outDir := flag.String("outDir", ".", "Output Directory")
+	// jpt_root := flag.String("jpt_root", "D:/AKIYAMA/Trunk_Rev56717_ForWeb/bin/Release/x64", "Jupiter Root Directory")
+	// outCsvDir := flag.String("outCsvDir", fmt.Sprintf("%s/TechnoStar/00", os.TempDir()), "Output CSV Directory")
+	flag.Parse()
+
+	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", *user, *password, *host, *database))
+	defer db.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router := mux.NewRouter()
 	const port string = ":8000"
 
-	router.HandleFunc("/posts", addItem).Methods("POST")
-
-	router.HandleFunc("/posts", getAllPosts).Methods("GET")
-
-	router.HandleFunc("/posts/{id}", getPost).Methods("GET")
-
-	router.HandleFunc("/posts/{id}", updatePost).Methods("PUT")
-
-	router.HandleFunc("/posts/{id}", patchPost).Methods("PATCH")
-
-	router.HandleFunc("/posts/{id}", deletePost).Methods("DELETE")
+	router.HandleFunc("/api/jmudt/fatigue", getJmuData(db, "jmu", "fatigue")).Methods("GET")
+	router.HandleFunc("/api/jmudt/moment", getJmuData(db, "jmu", "moment")).Methods("GET")
+	router.HandleFunc("/api/jmudt/state_calc", getJmuData(db, "jmu", "state_calc")).Methods("GET")
+	router.HandleFunc("/api/jmudt/operation", getJmuData(db, "statistics", "operation")).Methods("GET")
+	router.HandleFunc("/api/jmudt/gyro", getJmuData(db, "statistics", "gyro")).Methods("GET")
+	router.HandleFunc("/api/jmudt/trim01", getJmuData(db, "statistics", "trim01")).Methods("GET")
+	router.HandleFunc("/api/jmudt/trim02", getJmuData(db, "statistics", "trim02")).Methods("GET")
+	router.HandleFunc("/api/jmudt/trim03", getJmuData(db, "statistics", "trim03")).Methods("GET")
+	router.HandleFunc("/api/jmudt/trim04", getJmuData(db, "statistics", "trim04")).Methods("GET")
+	router.HandleFunc("/api/jmudt/waves", getJmuData(db, "statistics", "waves")).Methods("GET")
+	router.HandleFunc("/api/jmudt/state_statistics", getJmuData(db, "statistics", "state_statistics")).Methods("GET")
+	router.HandleFunc("/api/jmudt/statistics_process", getJmuData(db, "statistics", "statistics_process")).Methods("GET")
+	router.HandleFunc("/api/jmudt/shipmeasurepoint", getJmuData(db, "statistics", "shipmeasurepoint")).Methods("GET")
+	router.HandleFunc("/api/jmudt/rainflow", getJmuData(db, "statistics", "rainflow")).Methods("GET")
+	router.HandleFunc("/api/jmudt/compweather", getJmuData(db, "statistics", "compweather")).Methods("GET")
+	router.HandleFunc("/api/jmudt/msmwallowable", getJmuData(db, "statistics", "msmwallowable")).Methods("GET")
+	router.HandleFunc("/api/jmudt/shipinfo", getJmuData(db, "ship_master", "shipinfo")).Methods("GET")
+	router.HandleFunc("/api/jmudt/shipowner", getJmuData(db, "ship_master", "shipowner")).Methods("GET")
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Up and running...")
@@ -48,121 +75,4 @@ func main() {
 
 	log.Printf("Server listening on port %s\n", port)
 	http.ListenAndServe(port, router)
-}
-
-func getPost(w http.ResponseWriter, r *http.Request) {
-	// get the ID of the post from the route parameter
-	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		// there was an error
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
-		return
-	}
-
-	// error checking
-	if id >= len(posts) {
-		w.WriteHeader(404)
-		w.Write([]byte("No post found with specified ID"))
-		return
-	}
-
-	post := posts[id]
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
-}
-
-func getAllPosts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(posts)
-}
-
-func addItem(w http.ResponseWriter, r *http.Request) {
-	// get Item value from the JSON body
-	var newPost Post
-	json.NewDecoder(r.Body).Decode(&newPost)
-
-	posts = append(posts, newPost)
-
-	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(posts)
-}
-
-func updatePost(w http.ResponseWriter, r *http.Request) {
-	// get the ID of the post from the route parameters
-	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
-		return
-	}
-
-	// error checking
-	if id >= len(posts) {
-		w.WriteHeader(404)
-		w.Write([]byte("No post found with specified ID"))
-		return
-	}
-
-	// get the value from JSON body
-	var updatedPost Post
-	json.NewDecoder(r.Body).Decode(&updatedPost)
-
-	posts[id] = updatedPost
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedPost)
-}
-
-func patchPost(w http.ResponseWriter, r *http.Request) {
-	// get the ID of the post from the route parameters
-	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
-		return
-	}
-
-	// error checking
-	if id >= len(posts) {
-		w.WriteHeader(404)
-		w.Write([]byte("No post found with specified ID"))
-		return
-	}
-
-	// get the current value
-	post := &posts[id]
-	json.NewDecoder(r.Body).Decode(post)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
-}
-
-func deletePost(w http.ResponseWriter, r *http.Request) {
-	// get the ID of the post from the route parameters
-	var idParam string = mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		w.WriteHeader(400)
-		w.Write([]byte("ID could not be converted to integer"))
-		return
-	}
-
-	// error checking
-	if id >= len(posts) {
-		w.WriteHeader(404)
-		w.Write([]byte("No post found with specified ID"))
-		return
-	}
-
-	// Delete the post from the slice
-	// https://github.com/golang/go/wiki/SliceTricks#delete
-	posts = append(posts[:id], posts[id+1:]...)
-
-	w.WriteHeader(200)
 }
