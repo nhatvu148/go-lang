@@ -28,7 +28,8 @@ type WindowsProcess struct {
 
 func main() {
 	start := time.Now()
-	port := flag.Int("port", 52525, "Port number")
+	port := flag.Int("port", 52525, "Client port number")
+	portProd := flag.Int("portProd", 4000, "Server port number")
 	nginxDir := flag.String("nginxDir", "C:/Users/nhatv/Work/TechnoStar/jmu-dt/bin/nginx", "Nginx directory")
 
 	flag.Parse()
@@ -39,7 +40,7 @@ func main() {
 	proc := make(chan int)
 	wg.Add(2)
 
-	go editNginx(*port, fmt.Sprintf("%s/conf/nginx.conf", *nginxDir), &wg, sig)
+	go editNginx(*port, *portProd, fmt.Sprintf("%s/conf/nginx.conf", *nginxDir), &wg, sig)
 	go restartNginx(*port, *nginxDir, &wg, sig, proc, quit)
 
 OuterLoop:
@@ -92,7 +93,7 @@ func findKillProcess(name string) int {
 	return -1
 }
 
-func editNginx(port int, confFile string, wg *sync.WaitGroup, sig chan struct{}) {
+func editNginx(port int, portProd int, confFile string, wg *sync.WaitGroup, sig chan struct{}) {
 	defer wg.Done()
 	defer close(sig)
 	file, err := os.Create(confFile)
@@ -107,7 +108,7 @@ func editNginx(port int, confFile string, wg *sync.WaitGroup, sig chan struct{})
 		"http {", "    include       mime.types;", "    default_type  application/octet-stream;", "", "    #log_format  main  '$remote_addr - $remote_user [$time_local] \"$request\" '",
 		"    #                  '$status $body_bytes_sent \"$http_referer\" '", "    #                  '\"$http_user_agent\" \"$http_x_forwarded_for\"';",
 		"", "    #access_log  logs/access.log  main;", "", "    sendfile        on;", "    #tcp_nopush     on;", "", "    #keepalive_timeout  0;",
-		"    keepalive_timeout  65;", "", "    #gzip  on;", "", "    upstream backend-server {", "        server localhost:4000;",
+		"    keepalive_timeout  65;", "", "    #gzip  on;", "", "    upstream backend-server {", fmt.Sprintf("        server localhost:%d;", portProd),
 		"    }", "", "    server {", fmt.Sprintf("        listen       %d;", port), "        server_name  localhost;", "", "        location / {",
 		"            root   ../../client/build;", "            index  index.html;", "", "            try_files $uri /index.html;",
 		"        }", "", "        location /api/ {", "            proxy_pass http://backend-server;", "        }", "",
