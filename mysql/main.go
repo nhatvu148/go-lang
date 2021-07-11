@@ -96,6 +96,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	curDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	alphaMap := make(map[int]string)
 	for i := 1; i <= 26; i++ {
 		alphaMap[i] = string(rune(i + 64))
@@ -112,10 +117,17 @@ func main() {
 		args := []string{
 			"cmd",
 			"/C",
-			fmt.Sprintf("%s/Start_It.bat -b -mcr -keywebapp runme.jpl", *jpt_root),
+			"Start_It.bat",
+			"-b",
+			"-mcr",
+			"-keywebapp",
+			curDir + "/runme.jpl",
 		}
 
-		CmdExec(args...)
+		_, err := CmdExec(*jpt_root, args...)
+		if err != nil {
+			log.Printf("%v\n==> Jupiter Execution failed", err)
+		}
 		CsvToJson(*outCsvDir, csvChan)
 	}()
 
@@ -580,14 +592,16 @@ func main() {
 	log.Printf("Exporting excels took %s", elapsed)
 }
 
-func CmdExec(args ...string) (string, error) {
+func CmdExec(jpt_root string, args ...string) (string, error) {
 
 	baseCmd := args[0]
 	cmdArgs := args[1:]
 
-	fmt.Printf("Exec: %v", args)
+	fmt.Printf("Exec: %v\n", args)
 
 	cmd := exec.Command(baseCmd, cmdArgs...)
+	cmd.Dir = jpt_root
+
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
