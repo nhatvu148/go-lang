@@ -6,8 +6,64 @@ import (
 	"log"
 	"net/http"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 )
+
+type StateStatistics struct {
+	State_Measure_ID  int
+	ShipInfo_ID       int
+	datetime          string
+	NumofProcess      int
+	NumofMeasurePoint int
+	MENR              string
+	DEVL              string
+}
+type MsmwAllowable struct {
+	datetime    string
+	ShipInfo_ID int
+	X_From_AP   float64
+	MsMw_HOG    float64
+	MsMw_SAG    float64
+}
+type CompWeather struct {
+	datetime                          string
+	SignificantWaveHeight_Arbitrary00 float64
+}
+type Operation struct {
+	Operation_ID         int
+	ShipInfo_ID          int
+	datetime             string
+	NumofRow             int
+	GPZDA_DATETIME       string
+	GPGNS_LAT            float64
+	GPGNS_LON            float64
+	GPGGA_LAT            float64
+	GPGGA_LON            float64
+	VDVBW_SOG            float64
+	GPVTG_COG            float64
+	WIMWV_REL_ANGLE      float64
+	WIMWV_REL_SPEED      float64
+	HEHDT_HEADING        float64
+	HETHS_HEADING        float64
+	VDVBW_SOW            float64
+	AGRSA_ANGLE_1        float64
+	AGRSA_ANGLE_2        float64
+	RCRPM_SHAFT_REV_E_1  float64
+	RCRPM_SHAFT_REV_E_2  float64
+	RCRPM_PROP_PITCH_E_1 float64
+	RCRPM_PROP_PITCH_E_2 float64
+	VDVBW_1              float64
+	VDVBW_6              float64
+	VDVBW_4              float64
+	VDVBW_8              float64
+	SDDPT                float64
+	WIMWV_TRUE_ANGLE     float64
+	WIMWV_TRUE_SPEED     float64
+	GPVTG_2              float64
+	GPVTG_4              float64
+	GPVTG_6              float64
+}
 
 func getJmuData(db *sql.DB, dbName string, dataName string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +111,84 @@ func getJmuData(db *sql.DB, dbName string, dataName string) http.HandlerFunc {
 
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		switch {
+		case dataName == "compweather":
+			dateList2 := []string{}
+			waveHList := []float64{}
+			// wavePList := []float64{}
+			// waveNameSlice := []string{"Wave Height", "Wave Period"}
+
+			for res.Next() {
+				var stateStatistics StateStatistics
+				var compWeather CompWeather
+				var msmwallowable MsmwAllowable
+				var operation Operation
+				err := res.Scan(
+					&stateStatistics.State_Measure_ID,
+					&stateStatistics.ShipInfo_ID,
+					&stateStatistics.datetime,
+					&stateStatistics.NumofProcess,
+					&stateStatistics.NumofMeasurePoint,
+					&stateStatistics.MENR,
+					&stateStatistics.DEVL,
+
+					&msmwallowable.datetime,
+					&msmwallowable.ShipInfo_ID,
+					&msmwallowable.X_From_AP,
+					&msmwallowable.MsMw_HOG,
+					&msmwallowable.MsMw_SAG,
+
+					&compWeather.datetime,
+					&compWeather.SignificantWaveHeight_Arbitrary00,
+					// &compWeather.WavePeriod_Arbitrary00,
+
+					&operation.Operation_ID,
+					&operation.ShipInfo_ID,
+					&operation.datetime,
+					&operation.NumofRow,
+					&operation.GPZDA_DATETIME,
+					&operation.GPGNS_LAT,
+					&operation.GPGNS_LON,
+					&operation.GPGGA_LAT,
+					&operation.GPGGA_LON,
+					&operation.VDVBW_SOG,
+					&operation.GPVTG_COG,
+					&operation.WIMWV_REL_ANGLE,
+					&operation.WIMWV_REL_SPEED,
+					&operation.HEHDT_HEADING,
+					&operation.HETHS_HEADING,
+					&operation.VDVBW_SOW,
+					&operation.AGRSA_ANGLE_1,
+					&operation.AGRSA_ANGLE_2,
+					&operation.RCRPM_SHAFT_REV_E_1,
+					&operation.RCRPM_SHAFT_REV_E_2,
+					&operation.RCRPM_PROP_PITCH_E_1,
+					&operation.RCRPM_PROP_PITCH_E_2,
+					&operation.VDVBW_1,
+					&operation.VDVBW_6,
+					&operation.VDVBW_4,
+					&operation.VDVBW_8,
+					&operation.SDDPT,
+					&operation.WIMWV_TRUE_ANGLE,
+					&operation.WIMWV_TRUE_SPEED,
+					&operation.GPVTG_2,
+					&operation.GPVTG_4,
+					&operation.GPVTG_6,
+				)
+
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				dateList2 = append(dateList2, compWeather.datetime)
+				waveHList = append(waveHList, compWeather.SignificantWaveHeight_Arbitrary00)
+				// wavePList = append(wavePList, compWeather.WavePeriod_Arbitrary00)
+			}
+
+			fmt.Println(dateList2)
+			fmt.Println(waveHList)
 		}
 	}
 }
