@@ -292,7 +292,7 @@ func main() {
 				panic(err)
 			}
 			yerrs.LineStyle.Width = vg.Points(1)
-			yerrs.Color = color.RGBA{R: 237, G: 242, B: 248, A: 255}
+			yerrs.Color = color.RGBA{R: 178, G: 219, B: 241, A: 255}
 
 			p.Add(yerrs, l)
 
