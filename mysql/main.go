@@ -265,6 +265,9 @@ func main() {
 			p := plot.New()
 			p.Title.Text = stressNameSlice[i]
 			p.Y.Label.Text = "Stress [MPa]"
+			if strings.HasPrefix(stressNameSlice[i], "A") {
+				p.Y.Label.Text = "Acceleration [m/s^2]"
+			}
 			p.X.Tick.Marker = timeTicks{}
 			p.Add(plotter.NewGrid())
 
